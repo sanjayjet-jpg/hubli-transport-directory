@@ -1,0 +1,102 @@
+﻿datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model TransportCompany {
+  id             String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name           String
+  normalizedName String
+  startingPlace  String             @default("Hubli")
+  address        String?            @default("")
+  isActive       Boolean            @default(true)
+  createdAt      DateTime?          @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime?          @default(now()) @db.Timestamptz(6)
+  contacts       TransportContact[]
+  servedCities   TransportCity[]
+  reviews        Review[]
+}
+
+model City {
+  id             String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name           String          @unique
+  normalizedName String          @unique
+  state          String?         @default("Karnataka")
+  createdAt      DateTime?       @default(now()) @db.Timestamptz(6)
+  transports     TransportCity[]
+}
+
+model TransportCity {
+  transportId String           @db.Uuid
+  cityId      String           @db.Uuid
+  transport   TransportCompany @relation(fields: [transportId], references: [id], onDelete: Cascade)
+  city        City             @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  @@id([transportId, cityId])
+}
+
+model TransportContact {
+  id          String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  transportId String           @db.Uuid
+  phone       String
+  caption     String?          @default("")
+  sortOrder   Int?             @default(1)
+  transport   TransportCompany @relation(fields: [transportId], references: [id], onDelete: Cascade)
+}
+
+model Banner {
+  id        String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  imageUrl  String
+  title     String?   @default("")
+  linkUrl   String?   @default("")
+  sortOrder Int?      @default(0)
+  isActive  Boolean   @default(true)
+  createdAt DateTime? @default(now()) @db.Timestamptz(6)
+}
+
+model Review {
+  id          String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  transportId String           @db.Uuid
+  userName    String
+  rating      Int
+  comment     String
+  isApproved  Boolean          @default(false)
+  createdAt   DateTime?        @default(now()) @db.Timestamptz(6)
+  transport   TransportCompany @relation(fields: [transportId], references: [id], onDelete: Cascade)
+}
+
+model Suggestion {
+  id            String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  startingPlace String?   @default("Hubli")
+  name          String
+  address       String?   @default("")
+  placesServed  String?   @default("")
+  contact1      String?
+  caption1      String?
+  contact2      String?
+  caption2      String?
+  contact3      String?
+  caption3      String?
+  suggestedBy   String
+  remarks       String?   @default("")
+  isReviewed    Boolean   @default(false)
+  isApproved    Boolean   @default(false)
+  createdAt     DateTime? @default(now()) @db.Timestamptz(6)
+}
+
+model AppSetting {
+  key       String    @id
+  value     String
+  updatedAt DateTime? @default(now()) @db.Timestamptz(6)
+}
+
+model AdminWhitelist {
+  id        String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  email     String    @unique
+  name      String?   @default("")
+  createdAt DateTime? @default(now()) @db.Timestamptz(6)
+}
